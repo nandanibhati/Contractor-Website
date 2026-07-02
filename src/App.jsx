@@ -1,11 +1,12 @@
-import React, { useState, useEffect, useRef, useMemo, memo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, memo, useCallback } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import {
   Building2, HardHat, Paintbrush, ShieldCheck, ArrowUpRight, Phone, MapPin,
   Menu, X, CheckCircle2, Star, Play, Layers, Compass, Ruler, Key, FileText,
   Upload, Image as ImageIcon, MessageCircle, Clock, ChevronRight, Shield,
   Trash2, Calendar, Eye, Mail, Linkedin, Users, Award, Wrench, TrendingUp,
-  Home, Zap, ChevronDown, ArrowRight, Quote
+  Home, Zap, ChevronDown, ArrowRight, Quote, Trees, Car, ChevronLeft,
+  MoveHorizontal, BadgeCheck, Banknote, Bath, UtensilsCrossed
 } from 'lucide-react';
 
 /* ================================================================
@@ -33,6 +34,18 @@ const IMG = {
   luxury1:     'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=900&q=80',
   luxury2:     'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=900&q=80',
   luxury3:     'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=900&q=80',
+
+  /* ---- Survey project-type cards ---- */
+  ptExtension: 'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=700&q=80',
+  ptLoft:      'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=700&q=80',
+  ptKitchen:   'https://images.unsplash.com/photo-1600489000022-c2086d79f9d4?auto=format&fit=crop&w=700&q=80',
+  ptBath:      'https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?auto=format&fit=crop&w=700&q=80',
+  ptRoof:      'https://images.unsplash.com/photo-1635424710928-0544e8512eae?auto=format&fit=crop&w=700&q=80',
+  ptGarden:    'https://images.unsplash.com/photo-1600240644455-3edc55c375fe?auto=format&fit=crop&w=700&q=80',
+  ptDrive:     'https://images.unsplash.com/photo-1523217582562-09d0def993a6?auto=format&fit=crop&w=700&q=80',
+  ptCommercial:'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=700&q=80',
+
+  /* ---- Before / After pairs ---- */
   bfKitchenB:  'https://images.unsplash.com/photo-1565183997392-2f6f122e5912?auto=format&fit=crop&w=1200&q=80',
   bfKitchenA:  'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=1200&q=80',
   bfBathB:     'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=1200&q=80',
@@ -41,6 +54,15 @@ const IMG = {
   bfRoofA:     'https://images.unsplash.com/photo-1632759145351-1d592919f522?auto=format&fit=crop&w=1200&q=80',
   bfExtB:      'https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=1200&q=80',
   bfExtA:      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80',
+  bfLoftB:     'https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=1200&q=80',
+  bfLoftA:     'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=1200&q=80',
+  bfDriveB:    'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&w=1200&q=80',
+  bfDriveA:    'https://images.unsplash.com/photo-1523217582562-09d0def993a6?auto=format&fit=crop&w=1200&q=80',
+  bfGardenB:   'https://images.unsplash.com/photo-1592595896551-12b371d546d5?auto=format&fit=crop&w=1200&q=80',
+  bfGardenA:   'https://images.unsplash.com/photo-1558904541-efa843a96f01?auto=format&fit=crop&w=1200&q=80',
+  bfCommB:     'https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=1200&q=80',
+  bfCommA:     'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1200&q=80',
+
   ceo:         'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=500&q=80',
   pm:          'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&w=500&q=80',
   eng:         'https://images.unsplash.com/photo-1581091870622-1c6f6e3f5b66?auto=format&fit=crop&w=500&q=80',
@@ -65,6 +87,86 @@ const TRUST_LOGOS = [
   { name: 'Google', desc: '4.9 ★ 180+ Reviews' },
 ];
 
+/* ---- Survey: premium project-type cards ---- */
+const PROJECT_TYPES = [
+  { id:'Extension',  title:'House Extension',     icon:Building2,        img:IMG.ptExtension },
+  { id:'Loft',       title:'Loft Conversion',     icon:Layers,           img:IMG.ptLoft },
+  { id:'Kitchen',    title:'Kitchen Renovation',  icon:UtensilsCrossed,  img:IMG.ptKitchen },
+  { id:'Bathroom',   title:'Bathroom Renovation', icon:Bath,             img:IMG.ptBath },
+  { id:'Roof',       title:'Roofing',             icon:Home,             img:IMG.ptRoof },
+  { id:'Garden',     title:'Landscaping',         icon:Trees,            img:IMG.ptGarden },
+  { id:'Driveway',   title:'Driveway',            icon:Car,              img:IMG.ptDrive },
+  { id:'Commercial', title:'Commercial',          icon:Building2,        img:IMG.ptCommercial },
+];
+
+/* ---- Before / After: full project showcase data ---- */
+const BEFORE_AFTER_DATA = [
+  {
+    id:'kitchen', label:'Kitchen', before:IMG.bfKitchenB, after:IMG.bfKitchenA,
+    name:'Luxury Kitchen Renovation', type:'Kitchen Renovation', loc:'Manchester', year:'2025',
+    duration:'Completed in 4 Weeks', budget:'£28,000 – £35,000',
+    works:['New Cabinets','Marble Worktop','Plumbing','Electrical','Flooring'],
+    stats:[{v:4,suffix:' wks',l:'Build Time'},{v:35,prefix:'£',suffix:'k',l:'Budget'},{v:100,suffix:'%',l:'On Schedule'}],
+  },
+  {
+    id:'bathroom', label:'Bathroom', before:IMG.bfBathB, after:IMG.bfBathA,
+    name:'Spa-Grade Bathroom Transformation', type:'Bathroom Renovation', loc:'Richmond, Surrey', year:'2025',
+    duration:'Completed in 3 Weeks', budget:'£14,000 – £18,000',
+    works:['Full Strip-Out','Walk-In Shower','Underfloor Heating','Feature Tiling','LED Lighting'],
+    stats:[{v:3,suffix:' wks',l:'Build Time'},{v:18,prefix:'£',suffix:'k',l:'Budget'},{v:100,suffix:'%',l:'On Schedule'}],
+  },
+  {
+    id:'roof', label:'Roofing', before:IMG.bfRoofB, after:IMG.bfRoofA,
+    name:'Full Structural Re-Roof', type:'Roofing', loc:'Hampstead, London', year:'2025',
+    duration:'Completed in 2 Weeks', budget:'£9,000 – £14,000',
+    works:['Old Roof Removal','New Timbers','Breathable Membrane','Premium Tiles','Lead Flashing'],
+    stats:[{v:2,suffix:' wks',l:'Build Time'},{v:14,prefix:'£',suffix:'k',l:'Budget'},{v:50,suffix:' yrs',l:'Roof Lifespan'}],
+  },
+  {
+    id:'extension', label:'Extension', before:IMG.bfExtB, after:IMG.bfExtA,
+    name:'Luxury Rear Extension', type:'House Extension', loc:'Wandsworth, London', year:'2026',
+    duration:'Completed in 10 Weeks', budget:'£65,000 – £85,000',
+    works:['Groundworks','Steel RSJs','Bifold Doors','Roof Lantern','Full Finish'],
+    stats:[{v:10,suffix:' wks',l:'Build Time'},{v:120,prefix:'£',suffix:'k',l:'Value Added'},{v:100,suffix:'%',l:'On Budget'}],
+  },
+  {
+    id:'loft', label:'Loft', before:IMG.bfLoftB, after:IMG.bfLoftA,
+    name:'Dormer Loft Conversion', type:'Loft Conversion', loc:'Streatham, London', year:'2025',
+    duration:'Completed in 8 Weeks', budget:'£45,000 – £55,000',
+    works:['Dormer Build','Velux Rooflights','New Staircase','Ensuite','Bespoke Storage'],
+    stats:[{v:8,suffix:' wks',l:'Build Time'},{v:95,prefix:'£',suffix:'k',l:'Value Added'},{v:2,suffix:'',l:'Rooms Added'}],
+  },
+  {
+    id:'driveway', label:'Driveway', before:IMG.bfDriveB, after:IMG.bfDriveA,
+    name:'Block Paving Driveway', type:'Driveway', loc:'Cobham, Surrey', year:'2025',
+    duration:'Completed in 2 Weeks', budget:'£8,000 – £12,000',
+    works:['Old Concrete Removal','New Sub-Base','Block Paving','Edging & Drainage','LED Bollards'],
+    stats:[{v:2,suffix:' wks',l:'Build Time'},{v:12,prefix:'£',suffix:'k',l:'Budget'},{v:100,suffix:'%',l:'On Schedule'}],
+  },
+  {
+    id:'garden', label:'Landscaping', before:IMG.bfGardenB, after:IMG.bfGardenA,
+    name:'Luxury Garden Transformation', type:'Landscaping', loc:'Esher, Surrey', year:'2026',
+    duration:'Completed in 5 Weeks', budget:'£22,000 – £30,000',
+    works:['Full Redesign','Indian Stone Patio','Outdoor Kitchen','Garden Lighting','Planting Scheme'],
+    stats:[{v:5,suffix:' wks',l:'Build Time'},{v:30,prefix:'£',suffix:'k',l:'Budget'},{v:100,suffix:'%',l:'Client Rated'}],
+  },
+  {
+    id:'commercial', label:'Commercial', before:IMG.bfCommB, after:IMG.bfCommA,
+    name:'Modern Office Renovation', type:'Commercial Fit-Out', loc:'Shoreditch, London', year:'2026',
+    duration:'Completed in 7 Weeks', budget:'£120,000 – £150,000',
+    works:['Cat B Fit-Out','Meeting Pods','Kitchen & Breakout','M&E Works','Furniture Install'],
+    stats:[{v:7,suffix:' wks',l:'Build Time'},{v:80,suffix:'',l:'Staff Capacity'},{v:100,suffix:'%',l:'On Deadline'}],
+  },
+];
+
+const BA_TRUST_BADGES = [
+  { icon:BadgeCheck,   label:'Completed Successfully' },
+  { icon:ShieldCheck,  label:'Fully Insured' },
+  { icon:Shield,       label:'10 Year Warranty' },
+  { icon:HardHat,      label:'Certified Builders' },
+  { icon:Star,         label:'Customer Approved' },
+];
+
 const GALLERY_ITEMS = [
   { id:1, cat:'Extension', title:'The Glass Pavilion Rear Extension', loc:'Kensington, London', year:'2025', img:IMG.ext1, desc:'Double-storey glass extension with bifold doors.' },
   { id:2, cat:'Kitchen',   title:'Architectural Culinary Hub', loc:'Chelsea, London', year:'2026', img:IMG.kitchen1, desc:'Open-plan kitchen with Corian worktops and island.' },
@@ -81,13 +183,6 @@ const GALLERY_ITEMS = [
   { id:13, cat:'Kitchen',  title:'Bifold-Opening Kitchen Diner', loc:'Brighton', year:'2025', img:IMG.kitchen2, desc:'Rear extension with bifold kitchen diner layout.' },
   { id:14, cat:'Bathroom', title:'Art Deco Master En-suite', loc:'Bath', year:'2026', img:IMG.bath2, desc:'Art deco inspired en-suite with freestanding bath.' },
   { id:15, cat:'House',    title:'Full Victorian Terrace Renovation', loc:'Bristol', year:'2026', img:IMG.luxury3, desc:'Gut renovation of a 3-storey Victorian terrace.' },
-];
-
-const BEFORE_AFTER_DATA = [
-  { id:'kitchen', label:'Kitchen Renovation', before:IMG.bfKitchenB, after:IMG.bfKitchenA },
-  { id:'bathroom', label:'Bathroom Transformation', before:IMG.bfBathB, after:IMG.bfBathA },
-  { id:'roof', label:'Roof Structural Rebuild', before:IMG.bfRoofB, after:IMG.bfRoofA },
-  { id:'extension', label:'Rear Extension', before:IMG.bfExtB, after:IMG.bfExtA },
 ];
 
 const CASE_STUDIES = [
@@ -158,10 +253,10 @@ function useInView(threshold=0.18){
   return [ref,v];
 }
 
-function Section({children,className=''}){
+function Section({children,className='',...rest}){
   const [ref,v]=useInView(0.1);
   return(
-    <motion.section ref={ref} variants={stagger} initial="hidden" animate={v?'show':'hidden'} className={className}>
+    <motion.section ref={ref} variants={stagger} initial="hidden" animate={v?'show':'hidden'} className={className} {...rest}>
       {children}
     </motion.section>
   );
@@ -173,6 +268,25 @@ function FV({children,className='',delay=0}){
       {children}
     </motion.div>
   );
+}
+
+/* Animated count-up number — used by Before/After project stats */
+function CountUp({value,prefix='',suffix='',duration=1200,active}){
+  const [n,setN]=useState(0);
+  useEffect(()=>{
+    if(!active){setN(0);return;}
+    let raf,start;
+    const step=(ts)=>{
+      if(!start)start=ts;
+      const p=Math.min(1,(ts-start)/duration);
+      const eased=1-Math.pow(1-p,3);
+      setN(Math.round(eased*value));
+      if(p<1)raf=requestAnimationFrame(step);
+    };
+    raf=requestAnimationFrame(step);
+    return()=>cancelAnimationFrame(raf);
+  },[value,active,duration]);
+  return <span>{prefix}{n}{suffix}</span>;
 }
 
 const TrustTicker = memo(()=>(
@@ -421,33 +535,79 @@ function Gallery({setLightboxImage}){
 }
 
 /* ================================================================
-   BEFORE / AFTER SLIDER
+   BEFORE / AFTER — premium project showcase
+   Real project pairs • draggable glow handle • keyboard + touch
+   Auto-sweep on scroll into view • animated stats • trust badges
 ================================================================ */
 function BeforeAfter(){
   const [tab,setTab]=useState('kitchen');
   const [pos,setPos]=useState(50);
+  const [dragging,setDragging]=useState(false);
+  const [hovered,setHovered]=useState(false);
   const cRef=useRef(null);
+  const playedRef=useRef(false);
+  const [viewRef,inView]=useInView(0.35);
+
   const pair=useMemo(()=>BEFORE_AFTER_DATA.find(d=>d.id===tab)||BEFORE_AFTER_DATA[0],[tab]);
 
-  const handleMove=(cx)=>{
+  const handleMove=useCallback((cx)=>{
     if(!cRef.current)return;
     const r=cRef.current.getBoundingClientRect();
-    let p=Math.max(0,Math.min(100,((cx-r.left)/r.width)*100));
-    setPos(p);
+    setPos(Math.max(0,Math.min(100,((cx-r.left)/r.width)*100)));
+  },[]);
+
+  /* Global pointer listeners while dragging — smooth drag even off the image */
+  useEffect(()=>{
+    if(!dragging)return;
+    const mv=e=>handleMove(e.touches?e.touches[0].clientX:e.clientX);
+    const up=()=>setDragging(false);
+    window.addEventListener('mousemove',mv);
+    window.addEventListener('mouseup',up);
+    window.addEventListener('touchmove',mv,{passive:true});
+    window.addEventListener('touchend',up);
+    return()=>{
+      window.removeEventListener('mousemove',mv);
+      window.removeEventListener('mouseup',up);
+      window.removeEventListener('touchmove',mv);
+      window.removeEventListener('touchend',up);
+    };
+  },[dragging,handleMove]);
+
+  /* Auto-sweep reveal the first time the section scrolls into view */
+  useEffect(()=>{
+    if(!inView||playedRef.current)return;
+    playedRef.current=true;
+    const t1=setTimeout(()=>setPos(80),350);
+    const t2=setTimeout(()=>setPos(22),1250);
+    const t3=setTimeout(()=>setPos(50),2150);
+    return()=>{clearTimeout(t1);clearTimeout(t2);clearTimeout(t3);};
+  },[inView]);
+
+  /* Keyboard support: ← → adjust, Home/End snap */
+  const onKey=e=>{
+    if(e.key==='ArrowLeft'){e.preventDefault();setPos(p=>Math.max(0,p-4));}
+    else if(e.key==='ArrowRight'){e.preventDefault();setPos(p=>Math.min(100,p+4));}
+    else if(e.key==='Home'){e.preventDefault();setPos(0);}
+    else if(e.key==='End'){e.preventDefault();setPos(100);}
   };
+
+  const glide=dragging?'none':'left 0.65s cubic-bezier(0.22,1,0.36,1)';
+  const clipGlide=dragging?'none':'clip-path 0.65s cubic-bezier(0.22,1,0.36,1)';
 
   return(
     <Section id="transformation" className="py-28 bg-[#F4F2EE]/40 border-y border-gray-200/60">
-      <div className="max-w-7xl mx-auto px-5 lg:px-8">
-        <div className="text-center max-w-2xl mx-auto mb-14 space-y-3">
+      <div ref={viewRef} className="max-w-7xl mx-auto px-5 lg:px-8">
+
+        {/* HEADER */}
+        <div className="text-center max-w-2xl mx-auto mb-12 space-y-3">
           <FV><span className="text-[10px] font-black uppercase tracking-[0.22em] text-[#1E3A8A] block">Before & After</span></FV>
           <FV delay={0.08}><h2 className="text-3xl sm:text-5xl font-black text-[#0B0F19] tracking-tight">Real Renovations. Remarkable Results.</h2></FV>
-          <FV delay={0.14}><p className="text-gray-500 text-sm font-light max-w-md mx-auto">Drag the handle to compare before and after on real client projects.</p></FV>
+          <FV delay={0.14}><p className="text-gray-500 text-sm font-light max-w-md mx-auto">Drag the handle — or use your arrow keys — to compare real client projects before and after our work.</p></FV>
           <FV delay={0.18}>
             <div className="flex flex-wrap justify-center gap-2 pt-4">
               {BEFORE_AFTER_DATA.map(t=>(
                 <button key={t.id} onClick={()=>{setTab(t.id);setPos(50);}}
-                  className={`text-[10px] font-black uppercase tracking-widest px-4 py-2.5 rounded-xl border transition-all ${tab===t.id?'bg-[#0B0F19] text-white border-[#0B0F19] shadow':'bg-white text-gray-500 border-gray-200 hover:border-gray-400'}`}>
+                  className={`text-[10px] font-black uppercase tracking-widest px-4 py-2.5 rounded-xl border transition-all duration-300 ${tab===t.id?'bg-[#0B0F19] text-white border-[#D4AF37] shadow-[0_6px_20px_rgba(212,175,55,0.25)]':'bg-white text-gray-500 border-gray-200 hover:border-[#D4AF37]/60 hover:-translate-y-0.5'}`}>
                   {t.label}
                 </button>
               ))}
@@ -455,24 +615,166 @@ function BeforeAfter(){
           </FV>
         </div>
 
+        {/* PROJECT META — name, type, year, location above the slider */}
+        <FV>
+          <AnimatePresence mode="wait">
+            <motion.div key={pair.id} initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-8}} transition={{duration:0.3}}
+              className="max-w-4xl mx-auto flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-5 px-1">
+              <div>
+                <h3 className="text-xl sm:text-2xl font-black text-[#0B0F19] tracking-tight">{pair.name}</h3>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                  <span className="text-[#D4AF37] flex items-center gap-1"><HardHat className="w-3.5 h-3.5"/>{pair.type}</span>
+                  <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5 text-[#1E3A8A]"/>{pair.loc}</span>
+                  <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5 text-[#1E3A8A]"/>Completed {pair.year}</span>
+                </div>
+              </div>
+              <div className="shrink-0 bg-white border border-gray-200 rounded-xl px-3.5 py-2 text-[10px] font-black uppercase tracking-widest text-[#0B0F19] shadow-sm">
+                {Math.round(pos)}% <span className="text-[#D4AF37]">Revealed</span>
+              </div>
+            </motion.div>
+          </AnimatePresence>
+        </FV>
+
+        {/* SLIDER */}
         <FV>
           <div ref={cRef}
-            onMouseMove={e=>{if(e.buttons===1)handleMove(e.clientX);}}
-            onTouchMove={e=>handleMove(e.touches[0].clientX)}
-            className="relative max-w-4xl mx-auto aspect-[16/10] rounded-3xl overflow-hidden shadow-2xl border border-gray-200 select-none cursor-ew-resize">
-            <img src={pair.before} alt="Before" className="absolute inset-0 w-full h-full object-cover brightness-75"/>
-            <div className="absolute top-4 left-4 z-20 bg-[#0B0F19]/75 backdrop-blur px-3 py-1.5 rounded-lg text-[10px] font-black text-white uppercase tracking-widest">Before</div>
+            role="slider" tabIndex={0} aria-label={`Before and after comparison — ${pair.name}`}
+            aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(pos)}
+            onKeyDown={onKey}
+            onMouseDown={e=>{setDragging(true);handleMove(e.clientX);}}
+            onTouchStart={e=>{setDragging(true);handleMove(e.touches[0].clientX);}}
+            onMouseEnter={()=>setHovered(true)}
+            onMouseLeave={()=>setHovered(false)}
+            className="relative max-w-4xl mx-auto aspect-[16/10] rounded-3xl overflow-hidden shadow-2xl border border-gray-200 select-none cursor-ew-resize group focus:outline-none focus:ring-2 focus:ring-[#D4AF37] focus:ring-offset-2 touch-pan-y">
 
-            <div className="absolute inset-0 overflow-hidden z-10 pointer-events-none" style={{clipPath:`inset(0 ${100-pos}% 0 0)`}}>
-              <img src={pair.after} alt="After" className="absolute inset-0 w-full h-full object-cover"/>
-              <div className="absolute top-4 right-4 bg-[#D4AF37] px-3 py-1.5 rounded-lg text-[10px] font-black text-[#0B0F19] uppercase tracking-widest shadow">After</div>
+            {/* BEFORE layer */}
+            <img src={pair.before} alt={`${pair.name} — before`} loading="lazy" draggable={false}
+              className="absolute inset-0 w-full h-full object-cover brightness-[0.72] saturate-[0.85]"/>
+            <div className="absolute top-5 left-5 z-20 bg-[#0B0F19]/80 backdrop-blur-md px-4 py-2 rounded-xl text-xs sm:text-sm font-black text-white uppercase tracking-[0.2em] border border-white/10 shadow-lg">
+              Before
             </div>
 
-            <div className="absolute inset-y-0 z-30 w-1 bg-white shadow-2xl" style={{left:`${pos}%`}}>
-              <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-14 h-9 bg-white text-[#0B0F19] rounded-full shadow-2xl flex items-center justify-center border-2 border-[#D4AF37]">
-                <span className="text-[8px] font-black uppercase tracking-tighter">Drag</span>
+            {/* AFTER layer — clipped */}
+            <div className="absolute inset-0 overflow-hidden z-10 pointer-events-none"
+              style={{clipPath:`inset(0 ${100-pos}% 0 0)`, transition:clipGlide}}>
+              <img src={pair.after} alt={`${pair.name} — after`} loading="lazy" draggable={false}
+                className="absolute inset-0 w-full h-full object-cover"/>
+              <div className="absolute top-5 right-5 bg-[#D4AF37] px-4 py-2 rounded-xl text-xs sm:text-sm font-black text-[#0B0F19] uppercase tracking-[0.2em] shadow-[0_8px_24px_rgba(212,175,55,0.45)]">
+                After
               </div>
             </div>
+
+            {/* HOVER REVEAL — quick facts strip */}
+            <div className={`absolute inset-x-0 bottom-0 z-20 p-4 sm:p-5 bg-gradient-to-t from-[#0B0F19]/85 to-transparent transition-all duration-500 pointer-events-none ${hovered?'opacity-100 translate-y-0':'opacity-0 translate-y-3'}`}>
+              <div className="flex flex-wrap gap-2">
+                <span className="bg-white/10 backdrop-blur border border-white/15 text-white text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-lg flex items-center gap-1.5">
+                  <Clock className="w-3 h-3 text-[#D4AF37]"/>{pair.duration}
+                </span>
+                <span className="bg-white/10 backdrop-blur border border-white/15 text-white text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-lg flex items-center gap-1.5">
+                  <Banknote className="w-3 h-3 text-[#D4AF37]"/>{pair.budget}
+                </span>
+                <span className="bg-white/10 backdrop-blur border border-white/15 text-white text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-lg flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3 h-3 text-[#22C55E]"/>{pair.works.length} Works Completed
+                </span>
+              </div>
+            </div>
+
+            {/* DIVIDER + PREMIUM GLOW HANDLE */}
+            <div className="absolute inset-y-0 z-30 w-[3px] -translate-x-1/2 pointer-events-none"
+              style={{left:`${pos}%`, transition:glide,
+                background:'linear-gradient(to bottom, rgba(255,255,255,0.95), #D4AF37, rgba(255,255,255,0.95))',
+                boxShadow:'0 0 18px rgba(212,175,55,0.65), 0 0 42px rgba(212,175,55,0.3)'}}>
+              <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-[#0B0F19] border-2 border-[#D4AF37] flex items-center justify-center transition-transform duration-300 ${dragging?'scale-110':'group-hover:scale-105'}`}
+                style={{boxShadow:'0 0 0 5px rgba(212,175,55,0.18), 0 0 28px rgba(212,175,55,0.55), 0 10px 30px rgba(11,15,25,0.5)'}}>
+                <ChevronLeft className="w-4 h-4 text-[#D4AF37] -mr-0.5"/>
+                <MoveHorizontal className="w-3.5 h-3.5 text-white mx-[1px]"/>
+                <ChevronRight className="w-4 h-4 text-[#D4AF37] -ml-0.5"/>
+              </div>
+            </div>
+          </div>
+        </FV>
+
+        {/* PROJECT DETAILS CARD */}
+        <FV delay={0.1}>
+          <AnimatePresence mode="wait">
+            <motion.div key={`details-${pair.id}`} initial={{opacity:0,y:14}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-8}} transition={{duration:0.35}}
+              className="max-w-4xl mx-auto mt-6 bg-white border border-gray-200/80 rounded-3xl shadow-lg overflow-hidden">
+              <div className="grid grid-cols-1 lg:grid-cols-3">
+
+                {/* Facts */}
+                <div className="p-6 sm:p-7 space-y-4 border-b lg:border-b-0 lg:border-r border-gray-100">
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#1E3A8A]">Project Details</p>
+                  <div className="space-y-3">
+                    {[
+                      {icon:HardHat, l:'Project', v:pair.name},
+                      {icon:MapPin,  l:'Location', v:pair.loc},
+                      {icon:Clock,   l:'Timeline', v:pair.duration},
+                      {icon:Banknote,l:'Budget Range', v:pair.budget},
+                    ].map(row=>{
+                      const Icon=row.icon;
+                      return(
+                        <div key={row.l} className="flex items-start gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-[#D4AF37]/10 flex items-center justify-center shrink-0 mt-0.5">
+                            <Icon className="w-4 h-4 text-[#D4AF37]"/>
+                          </div>
+                          <div>
+                            <p className="text-[9px] font-black uppercase tracking-widest text-gray-400">{row.l}</p>
+                            <p className="text-xs font-bold text-[#0B0F19] mt-0.5 leading-snug">{row.v}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Work completed */}
+                <div className="p-6 sm:p-7 space-y-4 border-b lg:border-b-0 lg:border-r border-gray-100">
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#1E3A8A]">Work Completed</p>
+                  <ul className="space-y-2.5">
+                    {pair.works.map((w,i)=>(
+                      <motion.li key={w} initial={{opacity:0,x:-8}} animate={{opacity:1,x:0}} transition={{delay:0.15+i*0.07}}
+                        className="flex items-center gap-2.5 text-xs font-bold text-gray-700">
+                        <CheckCircle2 className="w-4 h-4 text-[#22C55E] shrink-0"/>{w}
+                      </motion.li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Animated stats */}
+                <div className="p-6 sm:p-7 bg-[#0B0F19] text-white flex flex-col justify-between space-y-5">
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#D4AF37]">Project Statistics</p>
+                  <div className="grid grid-cols-3 lg:grid-cols-1 gap-4 lg:gap-5">
+                    {pair.stats.map(s=>(
+                      <div key={s.l}>
+                        <p className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+                          <CountUp value={s.v} prefix={s.prefix||''} suffix={s.suffix||''} active={inView}/>
+                        </p>
+                        <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 mt-0.5">{s.l}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <a href="#survey" className="inline-flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-[#D4AF37] text-[#0B0F19] font-black text-[10px] tracking-widest uppercase hover:bg-white transition-all hover:-translate-y-0.5">
+                    Book Your Free Survey <ArrowUpRight className="w-3.5 h-3.5"/>
+                  </a>
+                </div>
+              </div>
+            </motion.div>
+          </AnimatePresence>
+        </FV>
+
+        {/* TRUST BADGES */}
+        <FV delay={0.18}>
+          <div className="max-w-4xl mx-auto mt-8 flex flex-wrap justify-center gap-3">
+            {BA_TRUST_BADGES.map((b,i)=>{
+              const Icon=b.icon;
+              return(
+                <motion.div key={b.label} initial={{opacity:0,y:10}} animate={inView?{opacity:1,y:0}:{}} transition={{delay:0.25+i*0.08}}
+                  className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 py-2.5 shadow-sm hover:border-[#D4AF37]/60 hover:-translate-y-0.5 transition-all">
+                  <Icon className="w-4 h-4 text-[#D4AF37]"/>
+                  <span className="text-[10px] font-black uppercase tracking-wider text-[#0B0F19]">{b.label}</span>
+                </motion.div>
+              );
+            })}
           </div>
         </FV>
       </div>
@@ -480,9 +782,8 @@ function BeforeAfter(){
   );
 }
 
-
 /* ================================================================
-   PHOTO UPLOAD SURVEY SECTION
+   PHOTO UPLOAD SURVEY SECTION — premium project-type image cards
 ================================================================ */
 function SurveySection(){
   const [submitted,setSubmitted]=useState(false);
@@ -490,7 +791,6 @@ function SurveySection(){
   const [uploading,setUploading]=useState(false);
   const [progress,setProgress]=useState(0);
   const [zone,setZone]=useState('Extension');
-  const zones=['House','Roof','Kitchen','Bathroom','Garden','Extension','Garage','Commercial'];
 
   const handleFiles=(newFiles)=>{
     if(!newFiles.length)return;
@@ -515,39 +815,84 @@ function SurveySection(){
         </div>
 
         <FV>
-          <div className="max-w-4xl mx-auto bg-white border border-gray-200/80 rounded-3xl shadow-2xl p-8 sm:p-12 relative overflow-hidden">
+          <div className="max-w-5xl mx-auto bg-white border border-gray-200/80 rounded-3xl shadow-2xl p-8 sm:p-12 relative overflow-hidden">
             <AnimatePresence mode="wait">
               {!submitted?(
-                <motion.form key="form" onSubmit={e=>{e.preventDefault();setSubmitted(true);}} className="space-y-8">
+                <motion.form key="form" onSubmit={e=>{e.preventDefault();setSubmitted(true);}} className="space-y-9">
+
+                  {/* ---- PREMIUM PROJECT TYPE CARDS ---- */}
                   <div className="space-y-3">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-[#0B0F19]">1. Select Project Type</label>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                      {zones.map(z=>(
-                        <div key={z} onClick={()=>setZone(z)} className={`border rounded-xl p-3.5 flex flex-col items-center text-center cursor-pointer transition-all group ${zone===z?'bg-[#0B0F19] border-[#0B0F19] text-white shadow':'border-gray-200 bg-gray-50 hover:border-[#D4AF37] text-[#111827]'}`}>
-                          <ImageIcon className={`w-4 h-4 mb-1.5 ${zone===z?'text-[#D4AF37]':'text-gray-400 group-hover:text-[#D4AF37]'} transition-colors`}/>
-                          <span className="text-[10px] font-bold uppercase tracking-wider">{z}</span>
-                        </div>
-                      ))}
+                    <label className="text-[10px] font-black uppercase tracking-widest text-[#0B0F19] block">1. Select Project Type</label>
+                    <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-8 gap-2.5">
+                      {PROJECT_TYPES.map(z=>{
+                        const Icon=z.icon;
+                        const isSel=zone===z.id;
+                        return(
+                          <button type="button" key={z.id} onClick={()=>setZone(z.id)}
+                            aria-pressed={isSel}
+                            className={`relative group rounded-xl overflow-hidden border text-left transition-all duration-300 h-20 sm:h-24 focus:outline-none focus:ring-2 focus:ring-[#D4AF37] ${
+                              isSel
+                                ? 'border-[#D4AF37] shadow-[0_0_0_1px_#D4AF37,0_8px_18px_rgba(212,175,55,0.35)] -translate-y-0.5'
+                                : 'border-gray-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:border-gray-300'
+                            }`}>
+                            {/* Image */}
+                            <img src={z.img} alt={z.title} loading="lazy"
+                              className={`absolute inset-0 w-full h-full object-cover transition-transform duration-500 ease-out ${isSel?'scale-110':'group-hover:scale-108'}`}/>
+                            {/* Gradient scrim for legibility */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F19]/90 via-[#0B0F19]/30 to-[#0B0F19]/10"/>
+                            {/* Gold selected glow overlay */}
+                            {isSel && (
+                              <div className="absolute inset-0 bg-[#D4AF37]/12 mix-blend-overlay"/>
+                            )}
+                            {/* Small icon badge */}
+                            <div className={`absolute top-1.5 left-1.5 w-5 h-5 rounded-md backdrop-blur-md flex items-center justify-center border transition-colors duration-300 ${isSel?'bg-[#D4AF37] border-[#D4AF37] text-[#0B0F19]':'bg-white/15 border-white/25 text-white'}`}>
+                              <Icon className="w-2.5 h-2.5"/>
+                            </div>
+                            {/* Selected checkmark */}
+                            <AnimatePresence>
+                              {isSel && (
+                                <motion.div initial={{scale:0,opacity:0}} animate={{scale:1,opacity:1}} exit={{scale:0,opacity:0}}
+                                  transition={{type:'spring',stiffness:400,damping:20}}
+                                  className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-[#D4AF37] flex items-center justify-center shadow-lg">
+                                  <CheckCircle2 className="w-2.5 h-2.5 text-[#0B0F19]"/>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                            {/* Title */}
+                            <div className="absolute inset-x-0 bottom-0 p-1.5">
+                              <p className="text-white text-[9px] font-black uppercase tracking-wide leading-tight drop-shadow line-clamp-2">{z.title}</p>
+                            </div>
+                            {/* Selected gold border ring (extra emphasis) */}
+                            {isSel && (
+                              <div className="absolute inset-0 rounded-xl ring-2 ring-[#D4AF37] pointer-events-none"/>
+                            )}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
 
-                  <div className="relative border-2 border-dashed border-gray-300 hover:border-[#D4AF37] bg-gray-50/50 rounded-2xl p-8 text-center transition-all group">
-                    <input type="file" multiple onChange={e=>handleFiles(e.target.files)} className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-20"/>
-                    <div className="flex flex-col items-center space-y-3">
-                      <div className="w-14 h-14 rounded-xl bg-white border border-gray-200 shadow flex items-center justify-center text-gray-400 group-hover:text-[#D4AF37] transition-all group-hover:scale-105">
-                        <Upload className="w-6 h-6"/>
-                      </div>
-                      <p className="text-xs font-bold text-gray-700">Drag & drop photos of your property or click to upload</p>
-                      <p className="text-[10px] text-gray-400">Supports PNG, JPG, JPEG</p>
-                    </div>
-                    {uploading&&(
-                      <div className="absolute inset-0 bg-white/95 z-30 flex flex-col items-center justify-center px-12 space-y-3">
-                        <div className="w-full max-w-xs bg-gray-100 rounded-full h-2 overflow-hidden">
-                          <div className="bg-[#D4AF37] h-full transition-all duration-150" style={{width:`${progress}%`}}/>
+                  {/* ---- UPLOAD ZONE ---- */}
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-[#0B0F19] block">2. Upload Property Photos</label>
+                    <div className="relative border-2 border-dashed border-gray-300 hover:border-[#D4AF37] bg-gray-50/50 rounded-2xl p-8 text-center transition-all group">
+                      <input type="file" multiple onChange={e=>handleFiles(e.target.files)} className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-20"/>
+                      <div className="flex flex-col items-center space-y-3">
+                        <div className="w-14 h-14 rounded-xl bg-white border border-gray-200 shadow flex items-center justify-center text-gray-400 group-hover:text-[#D4AF37] transition-all group-hover:scale-105">
+                          <Upload className="w-6 h-6"/>
                         </div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-[#0B0F19]">Uploading… {progress}%</p>
+                        <p className="text-xs font-bold text-gray-700">Drag & drop photos of your property or click to upload</p>
+                        <p className="text-[10px] text-gray-400">Supports PNG, JPG, JPEG</p>
                       </div>
-                    )}
+                      {uploading&&(
+                        <div className="absolute inset-0 bg-white/95 z-30 flex flex-col items-center justify-center px-12 space-y-3">
+                          <div className="w-full max-w-xs bg-gray-100 rounded-full h-2 overflow-hidden">
+                            <div className="bg-[#D4AF37] h-full transition-all duration-150" style={{width:`${progress}%`}}/>
+                          </div>
+                          <p className="text-[10px] font-black uppercase tracking-widest text-[#0B0F19]">Uploading… {progress}%</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {files.length>0&&(
@@ -700,7 +1045,7 @@ function CaseStudies(){
                       <motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:'auto'}} exit={{opacity:0,height:0}} className="space-y-2 overflow-hidden">
                         <p className="text-xs text-gray-600 font-light leading-relaxed"><span className="font-bold text-[#0B0F19]">Solution: </span>{c.solution}</p>
                         <p className="text-xs text-gray-600 font-light"><span className="font-bold text-[#0B0F19]">Timeline: </span>{c.timeline}</p>
-                        <p className="text-xs text-gray-600 font-light leading-relaxed"><span className="font-bold text-green-600]">Outcome: </span>{c.outcome}</p>
+                        <p className="text-xs text-gray-600 font-light leading-relaxed"><span className="font-bold text-green-600">Outcome: </span>{c.outcome}</p>
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -1069,7 +1414,6 @@ function Reviews(){
                     </div>
                     <div className="flex text-[#FBBC05] gap-0.5">{[...Array(r.rating)].map((_,i)=><Star key={i} className="w-3 h-3 fill-current"/>)}</div>
                   </div>
-                  <div className="flex text-[#FBBC05] gap-0.5">{[...Array(r.rating)].map((_,i)=><Star key={i} className="w-3 h-3 fill-current"/>)}</div>
                   <p className="text-xs text-gray-600 font-light leading-relaxed">"{r.text}"</p>
                 </div>
                 <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
@@ -1391,4 +1735,3 @@ export default function App(){
     </div>
   );
 }
-
